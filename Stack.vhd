@@ -1,3 +1,8 @@
+Library work;
+Library IEEE;
+Use IEEE.STD_LOGIC_1164.All;
+use ieee.numeric_std.all;
+
 entity Stack is
   port (
 	clk: in std_logic;
@@ -23,16 +28,16 @@ begin
 	begin
 		if rising_edge(clk) then
 			if push='1' then
-				mem_row[sp] <= data_in;
+				mem(to_integer(sp)) <= data_in;
 				sp <= sp + 1;
 			end if ;
-			if pop='1' and sp>(others=>'0') then
+			if pop='1' and sp>to_unsigned(0, 5) then
 				sp <= sp - to_unsigned(1, 5);
 			end if ;
 		end if ;
 	end process ; -- push_pop
 
-	is_empty <= '1' when sp=(others=>'0') else '0';
-	data_out <= mem_row[sp];
+	is_empty <= '1' when sp="00000" else '0';
+	data_out <= mem(to_integer(sp));
 
 end architecture ; -- behavioral

@@ -1,8 +1,15 @@
+Library work;
+Library IEEE;
+Use IEEE.STD_LOGIC_1164.All;
+use ieee.numeric_std.all;
+
+
 entity Datapath is
   port (
 	rst: in std_logic;
 	clk: in std_logic;
 	
+	sel: in std_logic;
 	num_clr: in std_logic;
 	
 	first_en: in std_logic;
@@ -11,12 +18,14 @@ entity Datapath is
 
 	op1_en: in std_logic;
 	op2_en: in std_logic;
-
 	operand_push: in std_logic;
 	operator_push: in std_logic;
 
 	operand_pop: in std_logic;
 	operator_pop: in std_logic;
+	
+	mode: in unsigned(1 downto 0);
+	result_en: in std_logic;
 
 	data_out: out unsigned(7 downto 0)
   ) ;
@@ -24,13 +33,10 @@ end entity ; -- Datapath
 
 architecture behavioral of Datapath is
 
-	signal is_operand: std_logic;
+	signal is_operand, is_hash, is_lt, is_operator, operand_empty, operator_empty: std_logic;
 	signal rom_index: unsigned(4 downto 0);
 	signal rom_data, convereted_decimal, first, second, third, operator_data_in, operand_data_in,
-		top_operator, top_operand, converted_asci: unsigned(7 downto 0);
-
-	type operator_type is (ADD, SUB, MULT, DIV);
-	signal converted_operator: operator_type;
+		top_operator, top_operand, converted_asci, result, op1, op2, converted_operator: unsigned(7 downto 0);
 
 
 begin
@@ -51,8 +57,8 @@ begin
 
 	is_operand <= '1' when (rom_data > to_unsigned(47, 8) and rom_data < to_unsigned(58, 8)) else '0';
 	is_operator <= '1' when (rom_data > to_unsigned(41, 8) and rom_data < to_unsigned(48, 8)) else '0';
-	is_hash = '1' when rom_data=to_unsigned(35, 8) else '0';
-	is_lt = '1' when ((converted_operator="01" and top_operator="00") or
+	is_hash <= '1' when rom_data=to_unsigned(35, 8) else '0';
+	is_lt <= '1' when ((converted_operator="01" and top_operator="00") or
 					(converted_operator="11" and top_operator="10") or
 					(converted_operator < top_operator)) else '0';
 
@@ -65,7 +71,7 @@ begin
 
 	operand_stack: entity work.Stack
 	port map(
-		clk => clk
+		clk => clk,
 		push => operand_push,
 		pop => operand_pop,
 
@@ -99,7 +105,7 @@ begin
 		if second_en='1' then
 			second <= converted_asci;
 		end if ;
-		if third_en then
+		if third_en='1' then
 			third <= converted_asci;
 		end if ;
 	end process ; -- digits
@@ -138,11 +144,16 @@ begin
 		if rst='1' then
 			result <= (others=>'0');
 		else
-			if result_en='1' begin
-				result 	<= 	op1 + op2 when (operator == (others=>'0')) else
-						op1 - op2 when (operator == to_unsigned(1, 8)) else
-						op1 * op2 when (operator == to_unsigned(2, 8)) else
-						divider_out;
+			if result_en='1' then
+				if top_operator = to_unsigned(0, 8) then
+					result 	<= 	op1 + op2;
+				end if ;
+				if  top_operator = to_unsigned(1, 8) then
+					result <= op1 - op2;
+				end if ;
+				if top_operator = to_unsigned(2, 8) then
+					result <= op1 * op2;
+				end if ;
 			end if ;
 		end if ;
 	end process ; -- result_assign
