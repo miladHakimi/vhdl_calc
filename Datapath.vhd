@@ -27,13 +27,18 @@ entity Datapath is
 	mode: in unsigned(1 downto 0);
 	result_en: in std_logic;
 
+	is_operand: out std_logic;
+	is_operator: out std_logic;
+	is_empty: out std_logic;
+	is_hash: out std_logic;
+	is_lt: out std_logic;
 	data_out: out unsigned(7 downto 0)
   ) ;
 end entity ; -- Datapath
 
 architecture behavioral of Datapath is
 
-	signal is_operand, is_hash, is_lt, is_operator, operand_empty, operator_empty: std_logic;
+	signal operand_empty, operator_empty: std_logic;
 	signal rom_index: unsigned(4 downto 0);
 	signal rom_data, convereted_decimal, first, second, third, operator_data_in, operand_data_in,
 		top_operator, top_operand, converted_asci, result, op1, op2, converted_operator: unsigned(7 downto 0);
